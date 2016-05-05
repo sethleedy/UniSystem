@@ -1,0 +1,4 @@
+# Nmap 6.49BETA5 scan initiated Mon Feb 29 17:16:09 2016 as: /usr/bin/nmap -T5 --open -sV -F -oG network_results/portwork_SCANNING_on_44.128.0.txt 44.128.0.*
+Host: 44.128.0.1 ()	Status: Up
+Host: 44.128.0.1 ()	Ports: 22/open/tcp//ssh//OpenSSH 6.6.1p1 Ubuntu 2ubuntu2.6 (Ubuntu Linux; protocol 2.0)/, 139/open/tcp//netbios-ssn//Samba smbd 3.X (workgroup: PORTWORK)/, 445/open/tcp//netbios-ssn//Samba smbd 3.X (workgroup: PORTWORK)/	Ignored State: closed (97)
+# Nmap done at Mon Feb 29 17:16:23 2016 -- 256 IP addresses (1 host up) scanned in 13.96 seconds

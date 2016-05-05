@@ -1,0 +1,60 @@
+#!/bin/bash
+
+clear
+
+# Load my Uni Functions script for some functions to use.
+function load_uni_functions() {
+	# use my custom functions
+	uni_functions_path=$(./find_up.sh . "uni_functions.sh")
+	#echo "uni: $uni_functions_path"
+	test_true=false
+
+	if [ "$uni_functions_path" != "" ]; then
+		source "$uni_functions_path" #2>/dev/null
+
+		if [ "$?" -ne 0 ]; then
+			echo "Could not source the Uni System Functions (uni_functions.sh)"
+			#exit 12
+		fi
+	else
+		echo "Could not find the file uni_functions.sh"
+		exit 11
+	fi
+
+}
+
+# Load my Uni Functions script for some functions to use.
+echo "Loading Functions"
+load_uni_functions
+
+find_amount=10
+
+	echo "9 of $find_amount"
+	sslstrip_var=$(loc_file "sslstrip") # Find the file
+	add_to_cache_loc_file("sslstrip" "$sslstrip_var") # Add it the cache.
+	echo "In cache: $loc_file_in_cache" # Test
+
+	echo "$sslstrip_var"
+	if [ "$sslstrip_var" == "" ] && [ "$USE_SSLSTRIP" == "yes" ]; then
+		echo "Missing: sslstrip"
+		#exit 10
+	fi
+	echo " "
+
+	echo "9 of $find_amount"
+	sslstrip_var=$(loc_file "sslstrip")
+	add_to_cache_loc_file("sslstrip" "$sslstrip_var")
+	echo "In cache: $loc_file_in_cache"
+
+	echo "$sslstrip_var"
+	if [ "$sslstrip_var" == "" ] && [ "$USE_SSLSTRIP" == "yes" ]; then
+		echo "Missing: sslstrip"
+		#exit 10
+	fi
+
+	echo "test print Array Item: $file_name -> "${cache_arr["$file_name"]}
+	echo "Test print Entire Array: "
+	echo "=="${cache_arr[@]}
+	echo "#="${#cache_arr[@]}
+
+exit 0

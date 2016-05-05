@@ -1,0 +1,51 @@
+Uni System layout
+~~~~~~~~~~~~~~~~~
+
+* Inital Daemon on all clustered machines
+	So, I need something to kick off the joining and partnering of the machines in the cluster. Prob start from rc.local or if the home directory is encrypted, .bashrc or the desktop start directory.
+	I think a bash daemon run on startup would allow us to keep monitoring things and update items only root access would allow.
+	Other parts can come from ionotify tool.
+	This daemon would need to monitor the SQL DB for new actions to take.
+
+* Speech
+	All speech should be translated to text and recorded on the fly into a SQLite table for later use
+	Having trouble in how I can get words translated without stopping the listen part. I want it to translate non stop, so nothing is missed.
+		This, from Chris's script, allows a "listen" until words are spoken; "sox -t alsa plughw:0,0 -C 0 -r 16000 speech.flac silence 1 0.1 5% trim 0 3;"
+		Another method(not great), is to have it listen in a loop of say 6 seconds. As soon as it is sent to processing, listen again. This downside is a drain on bandwidth and it would drain my MiFi really well.
+		After the text is returned, dump it into the SQL with a high precision date/time stamp. We can then recreate the commands spoken to the computer by reassambeling the words by time order. We start the ordering it by the key words we look for, like "computer" or "*name of computer*".
+
+
+
+* Functions
+	loc_file.sh - finds a file within a givin tree so it can be used. Eg: speak=$(../system/util/loc_file.sh "text2speech.sh") - will find the text2speech file and then execute it.
+
+* UniCron(*grin)
+	Follow the existing format of CronTab, but one additional column.
+	Added column is Machine/Group. Specify a machine for the script to run on or a Group of machines. Groups are specified in a sep file OR SQL(not sure yet).
+
+	We need some built in method of getting this cron run timely. We could use existing crontab, run once a minute. We could use a daemon, running on every machine.
+
+* ionotify
+	We can use ionotify tool to run a script when changes occur to specific files.
+If we watch the crontab, we can update it when a change happens. We can then edit each machines crontab within BTSync and it will update by itself. (Security Alert !)
+
+Since this system is running across several machines, we need a way for them to know which speaker and display(OUTPUTS) to use for giving information.
+Bluetooth could be used. Strongest sig of a device I'm wearing can be the output. I can also TELL the Unisystem which to use via voice!
+
+
+* SQL system and tables.
+	Thinking this should be kept in a memory storage and then synced every min to the BTSync storage in case we lose it. It would give us wonderful speed this way.
+
+	The idea behind the use of the SQL system is as follows.
+	Not just the storing of data for later usage but also the ability to easily link ideas to one another in a dynamic way.
+	I am looking to create a smart AI system that can absorb information from the Speech2Text and then ask you about what it picked up.
+	It will ask what such and such words mean. You can then assign commands to some meanings.
+		Eg: "Play Music", the AI asks you what this means. You assign the command VLC to the word "play". Music you assign a attribute "files". The AI, with some knowledge in the DB, will deduce that "*.mp3" is what you meant and then the next round of saying that will allow the AI to play music via the command "VLC *.mp3".
+		This is a simplified process that happens in the code. Much is needed in the mind map department before this becomes reality.
+Until this is figured out, we can continue building the base code, adding tools, utilities, ways of doing it automated.
+
+* Check gmail
+	I'm going to expand this so it can check multiple sources and types of systems. As of right now, it can check my gmail account and report how many unread messages their are and use the text2speech to let me know.
+
+
+

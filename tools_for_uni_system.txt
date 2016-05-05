@@ -1,0 +1,36 @@
+To start everything
+	BTSync:
+	Once Synced, install all other tools then start UniCron
+
+Text to Speech Google - Internet access required
+& Speech to Text
+	bash /home/seth/white_hat/scripts/system/speechtools/text2speech.sh "...There is an Error on ZFS."
+	Needed tools:
+	aplay
+	grep
+	cut
+	awk
+	sed
+	cat
+	mplayer
+	wget
+	curl
+
+# Install List of programs:
+# Basic OS stuff for running and this script.
+system_install_list_basic="tail crontabs cronie awk cut grep wget nano less tar gzip bzip2 chpasswd util-linux yum-plugin-fastestmirror"
+
+# Your desired tools and programs.
+system_install_list_tools="inadyn-mt openssh-server rsync screen espeak htop iotop iftop fuse openssh-clients ntp ntpdate ntsysv glances ssh-copy-id chkconfig sendmail p7zip dkms mtr logwatch smartmontools"
+
+? pulseaudio
+? pulseaudio-utils (pacat)
+
+Offline Text to Speech & Speech to Text
+?
+
+cron or rc.local or desktop startup or bash_rc? to start UniSystem
+
+How offer up link to download the BTSync program.
+If unable to use BTSync, how download light weight version that does not use BTSync.
+
