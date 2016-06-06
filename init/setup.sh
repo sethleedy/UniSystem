@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###
 # Variables
@@ -24,6 +24,15 @@ function log_command {
 	$1 1>>${RAW_LOG_FILE} 2>&1
 }
 
+function log_command_and_echo {
+	#Redirections don't seem to work within my function log_command
+	echo " " 1>>${RAW_LOG_FILE} 2>&1
+	echo "Command: $1" 1>>${RAW_LOG_FILE} 2>&1
+	$1 1>>${RAW_LOG_FILE} 2>&1
+	
+	echo "$1"
+}
+
 # Utility to log all echos AND display to screen
 function log_and_echo {
 
@@ -36,6 +45,8 @@ function log_and_echo {
 # After install/setup, before UniSystem takes over for further setup per group/node type, what needs to be executed/linked/checked ?
 function after_install_sanity_check {
 
+	## This should call another function that simply enables the service, no matter the type of system; systemd, init.d, etc.
+	
 	# If ubuntu distro:
 	if [ "${system_distro}" == "ubuntu" ] ; then
 		log_command "update-rc.d ssh enable"
@@ -48,57 +59,43 @@ function after_install_sanity_check {
 
 }
 
+# This will install the package passed on $1 or exit script as we need it to continue.
+# This function is to try every way possiable to install the package, no matter the system or package manager type.
+function install_package {
+	
+	# Check for package manager programs and use them if found.
+	# else exit with message.
+
+	$test_aptitude_package=$(loc_file "aptitude" "/usr/bin")
+	if [ "$test_aptitude_package" != "" ]; then
+		log_command "aptitude -yq install $1"
+	else
+		log_and_echo "Cannot install package $1. Exiting"
+		exit
+	fi
+}
+
 function update_system_packages {
 
-	# If fedora distro:
+	# If fedora distro with yum:
 	if [ "${system_distro}" == "fedora" ] ; then
-		# Use a up to date system
-		log_and_echo  " "
-		log_and_echo  "Update System a little before using."
-		log_command "yum -y clean all"
-
-		# Graphical or not
-		if [ "${system_runlevel}" == "5" ] ; then
-			cd /etc/yum.repos.d/
-
-		elif [ "${system_runlevel}" == "2" ] ; then #Console
-			cd /etc/yum.repos.d/
-
-		fi
-
-		# For faster installs, we can skip system updates.
-		if $do_system_update ; then
-			log_command "yum -y update"
-			log_command "yum -y upgrade"
-		else
-			log_and_echo "Skipping yum update and upgrade"
-		fi
+		log_command "yum -y update"
+		log_command "yum -y upgrade"
 	fi
 
-	# If ubuntu distro:
+	# If ubuntu distro with apt-get OR aptitude:
 	if [ "${system_distro}" == "ubuntu" ] ; then
-		# Use a up to date system
-		log_and_echo  " "
-		log_and_echo  "Update System a little before using."
-		log_command "aptitude autoclean"
-
-		# Graphical or not
-		if [ "${system_runlevel}" == "5" ] ; then
-			cd /etc/yum.repos.d/
-
-		elif [ "${system_runlevel}" == "2" ] ; then #Console
-			cd /etc/yum.repos.d/
-
-		fi
-
-		# For faster installs, we can skip system updates.
-		if $do_system_update ; then
-			log_command "aptitude -y update"
-			log_command "aptitude -y upgrade"
-		else
-			log_and_echo "Skipping aptitude update and upgrade"
-		fi
+		log_command "aptitude -y update"
+		log_command "aptitude -y upgrade"
 	fi
+	
+	# If ubuntu distro with Snap:
+	## Ubuntu is now switching over to another package manager in 16.04, "Snap" packages
+	if [ "${system_distro}" == "ubuntu" ] ; then
+		log_command "snap -y update"
+		log_command "snap -y upgrade"
+	fi
+	
 } # End update_system_packages
 
 
@@ -173,10 +170,10 @@ function setup_root_account_bashrc {
 	echo "$1" >> /root/.bashrc
 }
 
-# Fedora ?,16,? uses systemd to manage the runlevel. So use this function to set it.
+# Fedora ?,16,? uses systemd to manage the runlevel. So, use this function to set it.
 # multi-user
 # graphical
-function set_system_runlevel {
+function set_system_runlevel { ## Needs reworked !
 
 	# If fedora distro:
 	if [ "${system_distro}" == "fedora" ] ; then
@@ -235,8 +232,8 @@ function loc_file() {
 
 		for pathing in $sec_arg # note that $sec_arg must NOT be quoted here!
 		do
-				# Option: -ignore_readdir_race
-				# If a file disappears after its name has been read from a directory but before find gets around to examining the file with stat, don't issue an error message. If you don't specify this option, an error message will be issued. This option can be useful in system scripts (cron scripts, for example) that examine areas of the filesystem that change frequently (mail queues, temporary directories, and so forth), because this scenario is common for those sorts of directories.
+			# Option: -ignore_readdir_race
+			# If a file disappears after its name has been read from a directory but before find gets around to examining the file with stat, don't issue an error message. If you don't specify this option, an error message will be issued. This option can be useful in system scripts (cron scripts, for example) that examine areas of the filesystem that change frequently (mail queues, temporary directories, and so forth), because this scenario is common for those sorts of directories.
 			#echo "PATHING: $pathing"
 
 			loc_file_return=$(find $pathing -ignore_readdir_race \( -type f -name "$file_name" -not -iname ".*" -not -path "*/.*/*" \) 2>/dev/null)
@@ -272,11 +269,47 @@ function end_script_cleanup {
 	log_command "rm -f $cleanup_script_files >/dev/null 2>&1"
 
 	# Make sure it is all written to disk before rebooting.
-	sync
+	log_command "sync"
 
 	# Back to btsync dir
 	cd "$btsync_dir"
 
+}
+
+# Run this and put in all the different commands that need to be checked for existience and its location assigned.
+# Uses loc_file function
+function setupCommandVars { 
+	
+	rm_command=$(loc_file "rm") # Setup rm command
+	bash_command=$(loc_file "bash" "/bin")
+	
+}
+
+# If the file is not found, an exit of the program with a message about not finding the file is displayed
+function find_or_exit { # $1 is the file to find
+	
+	located=$(loc_file "$1")
+	if [ "$located" ]; then
+		return "$located"
+	else
+		echo "-----------"
+		echo "Could not find file: $1"
+		echo "Exiting"
+		exit
+	fi
+}
+
+# If the program is not found, it will try installing it. If it cannot, an exit and message about the error is displayed.
+function find_or_install { #1 is the program to find
+	
+	located=$(loc_file "$1")
+	#echo " - $located - "
+	if [ "$located" != "" ]; then
+		return "$located"
+	else
+		# Installing missing program
+		install_package "$1"
+	fi
 }
 
 function display_help {
@@ -301,10 +334,14 @@ if [ "$UID" -ne "0" ] ; then
 	#exit 67
 fi
 
-# Restart the Logs
-rm_command=$(loc_file "rm")
+# Setup all variables
+setupCommandVars
+
+# Restart the Logs. Delete older ones.
 $rm_command -f "${LOG_FILE}" >/dev/null 2>&1
 $rm_command -f "${RAW_LOG_FILE}" >/dev/null 2>&1
+
+
 
 # Read the command line starting arguments and apply to variables
 # If we do not have arguments, display help.
@@ -331,25 +368,34 @@ until [ -z "$1" ]; do
 		until [ -z "$1" ]; do
 			modules_to_install=("${modules_to_install[@]}" "$1") # Add to array
 			shift
+			
+			## If the current one is now another optional command "-something", then exit the loop
+			word="$1"
+			if [ ${word:0:1} == "-" ]; then
+				break
+			fi
 		done		
 	fi
 
 	shift
 done
 
-# See what modules here
-echo "Modules: ${modules_to_install[@]}"
-exit
+## See what modules here
+#echo "Modules: ${modules_to_install[@]}"
+#exit
 
 # Loop the modules and do each setup
-set -f; IFS=,
-for cur_module in $modules_to_install; do
+for cur_module in "${modules_to_install[@]}"; do
 
-	echo $cur_module
-
+	# Execute them
+	#ls -l "../modules/$cur_module/module_$cur_module.sh"
+	
+	# The following is how to include other bash files ". /path/to/functions"
+	#log_command_and_echo ". \"../modules/$cur_module/module_$cur_module.sh\""
+	. "../modules/$cur_module/module_$cur_module.sh"
+	
 # Done Looping Modules
 done
-set +f; unset IFS
 
 exit
 
