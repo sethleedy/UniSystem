@@ -132,10 +132,10 @@ function check_loc_file_cache() {
 	in_array "$filename"
 
 	if [ $? -eq 0 ]; then
-		echo "true"
+		echo "In cache: true"
 		return 0
 	else
-		echo "false"
+		echo "In cache: false"
 		return 1
 	fi
 }
@@ -163,7 +163,8 @@ function loc_file() {
 	declare -i curr_expire_date;curr_expire_date=$(date +%s)
 	expire_key=$file_name"_expire"
 	declare -i check_expire;check_expire=${cache_arr[$expire_key]}
-	in_array "$file_name"
+	
+	check_loc_file_cache "$file_name"
 	if [ $? -eq 0 ]; then
 		if [ "$curr_expire_date" -lt "$check_expire" ]; then
 			loc_file_return=${cache_arr[$file_name]}
@@ -177,7 +178,11 @@ function loc_file() {
 		fi
 	fi
 
+#
+# If we get this far, then the file was not in cache or the entry in cache expired.
+#
 
+	# See if we can find the file via type command
 	loc_file_return=$(type "$file_name" 2>/dev/null)
 	#echo " "
 	#echo "=0 $loc_file_return within $pathing"
@@ -443,7 +448,8 @@ declare -g unisystem_functions_online="false"
 # Source other functions
 ####
 	#echo "Finding DB."
-	uni_db=$(loc_file "uni_sqlite_db_functions.sh" "/home/seth")
+	#uni_db=$(loc_file "uni_sqlite_db_functions.sh" "/home/seth") # File, Path
+	uni_db=$(loc_file "uni_sqlite_db_functions.sh" ".") # File, Path
 	add_to_cache_loc_file "uni_sqlite_db_functions.sh" "${uni_db}" # Add it the cache.
 	#uni_db=$(loc_file "wolf.wav")
 	#echo "Sourcing the DB -> $uni_db"

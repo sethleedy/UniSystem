@@ -1,6 +1,8 @@
 #!/bin/bash
 
 clear
+date
+
 
 # Load my Uni Functions script for some functions to use.
 function load_uni_functions() {
@@ -28,12 +30,12 @@ echo "Loading Functions"
 load_uni_functions
 
 find_amount=10
-	date
+
 	echo "Find file initally"
 	sslstrip_var=$(loc_file "cow.txt" "../word_lists/") # Find the file
 	date
-	add_to_cache_loc_file "cow.txt" "$sslstrip_var" # Add it to the cache.
-	#loc_file_in_cache=$(check_loc_file_cache "cow.txt") # See if it exists
+	add_to_cache_loc_file "sslstrip" "$sslstrip_var" # Add it to the cache.
+	#loc_file_in_cache=$(check_loc_file_cache "sslstrip") # See if it exists
 	#echo "In cache: $loc_file_in_cache" # Test
 
 	echo "$sslstrip_var"
@@ -41,20 +43,15 @@ find_amount=10
 		echo "Missing: cow.txt"
 		exit 10
 	fi
-	
-	
-	echo "----"
-	
-	
+
 	echo "Find file by cache ?"
-	#sslstrip_var=$(loc_file "cow.txt" "..")
+	sslstrip_var=$(loc_file "cow.txt" "..")
 	date
-	#add_to_cache_loc_file "cow.txt" "$sslstrip_var"
-	loc_file_in_cache=$(check_loc_file_cache "cow.txt")
-	date
+	add_to_cache_loc_file "sslstrip" "$sslstrip_var"
+	loc_file_in_cache=$(check_loc_file_cache "sslstrip")
 	echo "In cache: $loc_file_in_cache" # Test
 
-	#echo "$sslstrip_var"
+	echo "$sslstrip_var"
 	if [ "$sslstrip_var" == "" ] && [ "$USE_SSLSTRIP" == "yes" ]; then
 		echo "Missing: cow.txt"
 		exit 10
